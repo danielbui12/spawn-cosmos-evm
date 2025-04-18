@@ -31,7 +31,12 @@ func (k Querier) Params(c context.Context, req *types.QueryParamsRequest) (*type
 
 // ResolveName implements types.QueryServer.
 func (k Querier) ResolveName(goCtx context.Context, req *types.QueryResolveNameRequest) (*types.QueryResolveNameResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	panic("ResolveName is unimplemented")
-	return &types.QueryResolveNameResponse{}, nil
+	v, err := k.Keeper.NameMapping.Get(goCtx, req.Wallet)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryResolveNameResponse{
+		Name: v,
+	}, nil
 }

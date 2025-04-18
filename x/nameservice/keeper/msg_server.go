@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 
@@ -30,7 +31,19 @@ func (ms msgServer) UpdateParams(ctx context.Context, msg *types.MsgUpdateParams
 
 // SetServiceName implements types.MsgServer.
 func (ms msgServer) SetServiceName(ctx context.Context, msg *types.MsgSetServiceName) (*types.MsgSetServiceNameResponse, error) {
-	// ctx := sdk.UnwrapSDKContext(goCtx)
-	panic("SetServiceName is unimplemented")
+	if msg.Name == "" {
+		return nil, fmt.Errorf("name cannot be empty")
+	}
+
+	const maxNameLength = 32
+
+	if len(msg.Name) > maxNameLength {
+		return nil, fmt.Errorf("name cannot be longer than %d characters", maxNameLength)
+	}
+
+	if err := ms.k.NameMapping.Set(ctx, msg.Sender, msg.Name); err != nil {
+		return nil, err
+	}
+
 	return &types.MsgSetServiceNameResponse{}, nil
 }

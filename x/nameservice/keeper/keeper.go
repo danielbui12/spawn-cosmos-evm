@@ -28,6 +28,8 @@ type Keeper struct {
 	OrmDB  apiv1.StateStore
 
 	authority string
+
+	NameMapping collections.Map[string, string]
 }
 
 // NewKeeper creates a new Keeper instance
@@ -63,6 +65,10 @@ func NewKeeper(
 		OrmDB:  store,
 
 		authority: authority,
+
+		NameMapping: collections.NewMap(sb, collections.NewPrefix(1),
+			"name_mapping", collections.StringKey, collections.StringValue,
+		),
 	}
 
 	schema, err := sb.Build()
