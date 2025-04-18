@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Query_Params_FullMethodName      = "/nameservice.v1.Query/Params"
-	Query_ResolveName_FullMethodName = "/nameservice.v1.Query/ResolveName"
+	Query_Params_FullMethodName        = "/nameservice.v1.Query/Params"
+	Query_ResolveName_FullMethodName   = "/nameservice.v1.Query/ResolveName"
+	Query_ResolveWallet_FullMethodName = "/nameservice.v1.Query/ResolveWallet"
 )
 
 // QueryClient is the client API for Query service.
@@ -31,6 +32,8 @@ type QueryClient interface {
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 	// ResolveName allows a user to resolve the name of an account.
 	ResolveName(ctx context.Context, in *QueryResolveNameRequest, opts ...grpc.CallOption) (*QueryResolveNameResponse, error)
+	// ResolveWallet allows a user to resolve the wallet of a name.
+	ResolveWallet(ctx context.Context, in *QueryResolveWalletRequest, opts ...grpc.CallOption) (*QueryResolveWalletResponse, error)
 }
 
 type queryClient struct {
@@ -59,6 +62,15 @@ func (c *queryClient) ResolveName(ctx context.Context, in *QueryResolveNameReque
 	return out, nil
 }
 
+func (c *queryClient) ResolveWallet(ctx context.Context, in *QueryResolveWalletRequest, opts ...grpc.CallOption) (*QueryResolveWalletResponse, error) {
+	out := new(QueryResolveWalletResponse)
+	err := c.cc.Invoke(ctx, Query_ResolveWallet_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
@@ -67,6 +79,8 @@ type QueryServer interface {
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	// ResolveName allows a user to resolve the name of an account.
 	ResolveName(context.Context, *QueryResolveNameRequest) (*QueryResolveNameResponse, error)
+	// ResolveWallet allows a user to resolve the wallet of a name.
+	ResolveWallet(context.Context, *QueryResolveWalletRequest) (*QueryResolveWalletResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -79,6 +93,9 @@ func (UnimplementedQueryServer) Params(context.Context, *QueryParamsRequest) (*Q
 }
 func (UnimplementedQueryServer) ResolveName(context.Context, *QueryResolveNameRequest) (*QueryResolveNameResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ResolveName not implemented")
+}
+func (UnimplementedQueryServer) ResolveWallet(context.Context, *QueryResolveWalletRequest) (*QueryResolveWalletResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ResolveWallet not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -129,6 +146,24 @@ func _Query_ResolveName_Handler(srv interface{}, ctx context.Context, dec func(i
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_ResolveWallet_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryResolveWalletRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).ResolveWallet(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_ResolveWallet_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).ResolveWallet(ctx, req.(*QueryResolveWalletRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -143,6 +178,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ResolveName",
 			Handler:    _Query_ResolveName_Handler,
+		},
+		{
+			MethodName: "ResolveWallet",
+			Handler:    _Query_ResolveWallet_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

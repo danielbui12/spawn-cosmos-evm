@@ -12,6 +12,14 @@ func (am AppModule) AutoCLIOptions() *autocliv1.ModuleOptions {
 			Service: modulev1.Query_ServiceDesc.ServiceName,
 			RpcCommandOptions: []*autocliv1.RpcCommandOptions{
 				{
+					RpcMethod: "ResolveWallet",
+					Use:       "wallet [name]",
+					Short:     "Resolve the wallet address of a name",
+					PositionalArgs: []*autocliv1.PositionalArgDescriptor{
+						{ProtoField: "name"},
+					},
+				},
+				{
 					RpcMethod: "ResolveName",
 					Use:       "resolve [wallet]",
 					Short:     "Resolve the name of a wallet address",

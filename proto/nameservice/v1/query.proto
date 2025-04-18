@@ -18,6 +18,21 @@ service Query {
   rpc ResolveName(QueryResolveNameRequest) returns (QueryResolveNameResponse) {
     option (google.api.http).get = "/nameservice/v1/name/{wallet}";
   }
+
+  // ResolveWallet allows a user to resolve the wallet of a name.
+  rpc ResolveWallet(QueryResolveWalletRequest) returns (QueryResolveWalletResponse) {
+    option (google.api.http).get = "/nameservice/v1/wallet/{name}";
+  }
+}
+
+// QueryResolveWalletRequest grabs the wallet of a name.
+message QueryResolveWalletRequest {
+  string name = 1;
+}
+
+// QueryResolveWalletResponse grabs the name linked to a wallet.
+message QueryResolveWalletResponse {
+  string wallet = 1;
 }
 
 // QueryResolveNameRequest grabs the name of a wallet.
