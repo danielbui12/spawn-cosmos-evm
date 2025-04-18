@@ -1,0 +1,12 @@
+syntax = "proto3";
+
+package nsibc.v1;
+
+option go_package = "github.com/rollchains/demospawnevmchain/x/nsibc/types";
+
+import "gogoproto/gogo.proto";
+
+// GenesisState defines the modules genesis state.
+message GenesisState {
+    string port_id = 1;
+}

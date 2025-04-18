@@ -166,6 +166,9 @@ import (
 	nameservice "github.com/rollchains/demospawnevmchain/x/nameservice"
 	nameservicekeeper "github.com/rollchains/demospawnevmchain/x/nameservice/keeper"
 	nameservicetypes "github.com/rollchains/demospawnevmchain/x/nameservice/types"
+	nsibc "github.com/rollchains/demospawnevmchain/x/nsibc"
+	nsibckeeper "github.com/rollchains/demospawnevmchain/x/nsibc/keeper"
+	nsibctypes "github.com/rollchains/demospawnevmchain/x/nsibc/types"
 )
 
 const (
@@ -295,12 +298,14 @@ type ChainApp struct {
 	Erc20Keeper         erc20keeper.Keeper
 
 	ScopedIBCKeeper           capabilitykeeper.ScopedKeeper
+	ScopedNsibc capabilitykeeper.ScopedKeeper
 	ScopedICAHostKeeper       capabilitykeeper.ScopedKeeper
 	ScopedICAControllerKeeper capabilitykeeper.ScopedKeeper
 	ScopedTransferKeeper      capabilitykeeper.ScopedKeeper
 	ScopedIBCFeeKeeper        capabilitykeeper.ScopedKeeper
 	ScopedWasmKeeper          capabilitykeeper.ScopedKeeper
 	NameserviceKeeper nameservicekeeper.Keeper
+	NsibcKeeper nsibckeeper.Keeper
 
 	// the module manager
 	ModuleManager      *module.Manager
@@ -412,6 +417,7 @@ func NewChainApp(
 		feemarkettypes.StoreKey,
 		erc20types.StoreKey,
 		nameservicetypes.StoreKey,
+		nsibctypes.StoreKey,
 	)
 
 	tkeys := storetypes.NewTransientStoreKeys(
@@ -465,6 +471,7 @@ func NewChainApp(
 	scopedICAControllerKeeper := app.CapabilityKeeper.ScopeToModule(icacontrollertypes.SubModuleName)
 	scopedTransferKeeper := app.CapabilityKeeper.ScopeToModule(ibctransfertypes.ModuleName)
 	scopedWasmKeeper := app.CapabilityKeeper.ScopeToModule(wasmtypes.ModuleName)
+	scopedNsibc := app.CapabilityKeeper.ScopeToModule(nsibctypes.ModuleName)
 	app.CapabilityKeeper.Seal()
 
 	// add keepers
@@ -660,6 +667,17 @@ func NewChainApp(
 	)
 	// If evidence needs to be handled for the app, set routes in router here and seal
 	app.EvidenceKeeper = *evidenceKeeper
+
+	// Create the nsibc IBC Module Keeper
+	app.NsibcKeeper = nsibckeeper.NewKeeper(
+		appCodec,
+		runtime.NewKVStoreService(keys[nsibctypes.StoreKey]),
+		app.IBCKeeper.ChannelKeeper,
+		app.IBCKeeper.PortKeeper,
+		scopedNsibc,
+		&app.NameserviceKeeper,
+		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
+	)
 
 	// Create the nameservice Keeper
 	app.NameserviceKeeper = nameservicekeeper.NewKeeper(
@@ -915,6 +933,7 @@ func NewChainApp(
 	ibcRouter.AddRoute(wasmtypes.ModuleName, wasmStack)
 	ibcRouter.AddRoute(icacontrollertypes.SubModuleName, icaControllerStack)
 	ibcRouter.AddRoute(icahosttypes.SubModuleName, icaHostStack)
+	ibcRouter.AddRoute(nsibctypes.ModuleName, nsibc.NewExampleIBCModule(app.NsibcKeeper))
 	app.IBCKeeper.SetRouter(ibcRouter)
 
 	// --- Module Options ---
@@ -975,6 +994,8 @@ func NewChainApp(
 		erc20.NewAppModule(app.Erc20Keeper, app.AccountKeeper, app.GetSubspace(erc20types.ModuleName)),
 		nameservice.NewAppModule(appCodec, app.NameserviceKeeper),
 
+		nsibc.NewAppModule(app.NsibcKeeper),
+
 	)
 
 	// BasicModuleManager defines the module BasicManager is in charge of setting up basic,
@@ -1022,6 +1043,7 @@ func NewChainApp(
 		wasmlctypes.ModuleName,
 		ratelimittypes.ModuleName,
 		nameservicetypes.ModuleName,
+		nsibctypes.ModuleName,
 	)
 
 	app.ModuleManager.SetOrderEndBlockers(
@@ -1044,6 +1066,7 @@ func NewChainApp(
 		wasmlctypes.ModuleName,
 		ratelimittypes.ModuleName,
 		nameservicetypes.ModuleName,
+		nsibctypes.ModuleName,
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -1093,6 +1116,7 @@ func NewChainApp(
 		wasmlctypes.ModuleName,
 		ratelimittypes.ModuleName,
 		nameservicetypes.ModuleName,
+		nsibctypes.ModuleName,
 	}
 	app.ModuleManager.SetOrderInitGenesis(genesisModuleOrder...)
 	app.ModuleManager.SetOrderExportGenesis(genesisModuleOrder...)
@@ -1177,6 +1201,7 @@ func NewChainApp(
 		}
 	}
 
+	app.ScopedNsibc = scopedNsibc
 	app.ScopedIBCKeeper = scopedIBCKeeper
 	app.ScopedTransferKeeper = scopedTransferKeeper
 	app.ScopedWasmKeeper = scopedWasmKeeper
@@ -1537,6 +1562,7 @@ func initParamsKeeper(appCodec codec.BinaryCodec, legacyAmino *codec.LegacyAmino
 	paramsKeeper.Subspace(feemarkettypes.ModuleName)
 	paramsKeeper.Subspace(erc20types.ModuleName)
 	paramsKeeper.Subspace(nameservicetypes.ModuleName)
+	paramsKeeper.Subspace(nsibctypes.ModuleName)
 
 	return paramsKeeper
 }
