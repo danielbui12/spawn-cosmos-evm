@@ -1,0 +1,40 @@
+syntax = "proto3";
+package nameservice.v1;
+
+import "google/api/annotations.proto";
+import "nameservice/v1/genesis.proto";
+
+option go_package = "github.com/rollchains/demospawnevmchain/x/nameservice/types";
+
+// Query provides defines the gRPC querier service.
+service Query {
+  // Params queries all parameters of the module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/nameservice/v1/params";
+  }
+  
+
+  // ResolveName allows a user to resolve the name of an account.
+  rpc ResolveName(QueryResolveNameRequest) returns (QueryResolveNameResponse) {
+    option (google.api.http).get = "/nameservice/v1/name/{wallet}";
+  }
+}
+
+// QueryResolveNameRequest grabs the name of a wallet.
+message QueryResolveNameRequest {
+  string wallet = 1;
+}
+
+// QueryResolveNameResponse grabs the wallet linked to a name.
+message QueryResolveNameResponse {
+  string name = 1;
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1;
+}
